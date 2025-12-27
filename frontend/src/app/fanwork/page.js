@@ -1,131 +1,238 @@
 "use client";
-import React, { useState } from "react";
-import { Menu, X, ChevronDown } from "lucide-react";
+
+import React, { useState, useEffect } from "react";
+import { Heart, MessageCircle, ChevronDown, ChevronUp, User } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-import QuizCard from "../components/QuizCard";
-import UploadFanwork from "../components/UploadFanwork";
+import UploadFanwork from "@/components/UploadFanwork"; // sesuaikan path jika perlu
 
-export default function Fanwork() {
-  const [expandedCard, setExpandedCard] = useState(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
+function FanworkCard({ fanwork, isLiked, onLike, onCommentAdded }) {
+  const [expanded, setExpanded] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [postingComment, setPostingComment] = useState(false);
 
-  const toggleExpand = (cardId) => {
-    setExpandedCard(expandedCard === cardId ? null : cardId);
+  const description = fanwork.description || "";
+
+  useEffect(() => {
+    if (expanded) fetchComments();
+  }, [expanded]);
+
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    try {
+      const res = await fetch(`/api/fanworks/${fanwork.id}/comments`);
+      const result = await res.json();
+      if (result.success) setComments(result.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handlePostComment = async () => {
+    if (!newComment.trim()) return;
+    setPostingComment(true);
+    try {
+      const res = await fetch(`/api/fanworks/${fanwork.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newComment.trim() }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setNewComment("");
+        fetchComments();
+        onCommentAdded?.();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPostingComment(false);
+    }
   };
 
   return (
-    <div className="min-h-screen">
-      {/* HERO SECTION 1 */}
-      <section id="fanwork" className="pt-28 pb-12 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-[#66AC6E] rounded-3xl shadow-xl p-8 md:p-12 text-white">
-            <div className="flex justify-between items-start mb-6">
-              <h1 className="text-3xl md:text-5xl font-bold leading-tight">
-                Fan<span className="text-yellow-400">work</span>
-              </h1>
-              <div className="flex items-end space-x-2">
-                <span className="w-4 h-4 bg-white rounded-full"></span>
-                <span className="w-4 h-4 bg-yellow-400 rounded-full"></span>
-              </div>
-            </div>
-
-            <p className="text-lg leading-relaxed mb-4 font-bold">
-              Ayo ekspresikan kreativitas serta dukunganmu terhadap website Bumi
-              Bersih dengan membuat sebuah karya
-            </p>
-
-            <p className="text-lg leading-relaxed mb-4">
-              yang terinspirasi dari maskot kami, yaitu Fora dan Fana! Tunjukkan
-              imajinasimu melalui gambar, ilustrasi, atau kerajinan unik
-              lainnya, dan jadilah bagian dari gerakan untuk menjaga bumi tetap
-              bersih dan lestari.
-            </p>
+    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-100">
+      {/* Header */}
+      <div className="bg-[#66AC6E] px-5 py-3 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center">
+            <User size={18} className="text-green-700" />
           </div>
+          <span className="text-white font-bold">
+            {fanwork.user?.name || "User"}
+          </span>
         </div>
-      </section>
-
-      {/* Gallery Section */}
-      <section className="pb-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          {/* Upload Button */}
-          <div className="mx-8 mb-8 max-w-full flex justify-center items-end h-[526px] bg-[url(/images/img_plc.svg)]">
-            <div>
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="mb-12 bg-[#E3B214] hover:bg-yellow-500 text-white font-bold py-3 px-12 rounded-full transition-all hover:scale-105 shadow-lg"
-              >
-                Upload Karyamu!
-              </button>
-            </div>
-          </div>
-
-          {/* Gallery Grid */}
-          <QuizCard />
+        <div className="flex items-center gap-2 bg-white/20 rounded-full px-3 py-1">
+          <span className="text-white font-bold">{fanwork.likesCount || 0}</span>
+          <Heart size={20} className="text-white" />
         </div>
-      </section>
+      </div>
 
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center">
-            <div className="flex justify-center items-center space-x-2 mb-6">
-              <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-              <span className="w-3 h-3 bg-yellow-400 rounded-full"></span>
-            </div>
-
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">
-              Apa yang Bisa <span className="text-yellow-500">Kamu</span>{" "}
-              <span className="text-green-600">Lakukan?</span>
-            </h2>
-
-            <p className="text-[#66AC6E] text-lg mb-8 max-w-2xl mx-auto">
-              Pelajari berbagai langkah sederhana yang bisa kamu mulai sekarang
-              untuk menjaga kebersihan lingkungan dan memberi dampak nyata di
-              sekitarmu.
-            </p>
-
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/what-to-do">
-                <button className="bg-[#66AC6E]  text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition-all hover:scale-105 shadow-lg">
-                  What To Do
-                </button>
-              </Link>
-              <Link href="/zero-waste-lifestyle">
-                <button className="bg-[#66AC6E]  text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition-all hover:scale-105 shadow-lg">
-                  Zero Waste Lifestyle
-                </button>
-              </Link>
-              <Link href="/recycle-bay">
-                <button className="bg-[#66AC6E]  text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition-all hover:scale-105 shadow-lg">
-                  Recycle Bay
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-            {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Overlay */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setShowUploadModal(false)}
+      {/* Image dari array images */}
+      <div className="relative h-72 w-full bg-gray-50">
+        {fanwork.images?.[0]?.url ? (
+          <Image
+            src={fanwork.images[0].url}
+            alt={fanwork.title}
+            fill
+            className="object-cover"
           />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
+        )}
+      </div>
 
-          {/* Modal */}
-          <div className="relative z-50 bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
-            <button
-              onClick={() => setShowUploadModal(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-black"
-            >
-              ✕
-            </button>
+      {/* Content */}
+      <div className="p-5">
+        <h3 className="text-xl font-bold text-[#66AC6E] mb-3">{fanwork.title}</h3>
+        <p className="text-gray-600 text-sm mb-3">
+          {expanded
+            ? description
+            : description.length > 120
+            ? description.substring(0, 120) + "..."
+            : description}
+        </p>
 
-            <UploadFanwork onSuccess={() => setShowUploadModal(false)} />
+        {description.length > 120 && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-[#66AC6E] font-bold text-sm flex items-center gap-1"
+          >
+            {expanded ? "Tutup" : "Baca lebih lanjut"}
+            {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+        )}
+
+        {expanded && (
+          <div className="mt-4">
+            <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+              <MessageCircle size={16} /> Komentar
+            </h4>
+            {comments.map((c) => (
+              <div key={c.id} className="bg-gray-50 p-3 rounded-xl mb-2">
+                <p className="text-sm font-semibold">{c.user?.name || "User"}</p>
+                <p className="text-sm">{c.content}</p>
+              </div>
+            ))}
+            <input
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
+              placeholder="Ketik komentar..."
+              className="w-full border p-2 rounded mt-2"
+            />
           </div>
+        )}
+
+        {!expanded && (
+          <div className="flex justify-between pt-3">
+            <button onClick={() => onLike(fanwork.id)}>
+              <Heart
+                className={`w-6 h-6 ${isLiked ? "fill-red-500 text-red-500" : "text-gray-400"}`}
+              />
+            </button>
+            <button onClick={() => setExpanded(true)}>
+              <MessageCircle size={20} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function FanworkPage() {
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [fanworks, setFanworks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [likedFanworks, setLikedFanworks] = useState(new Set());
+
+  const fetchFanworks = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/fanworks");
+      const result = await res.json();
+      if (result.success) setFanworks(result.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLikedFanworks = async () => {
+    try {
+      const res = await fetch("/api/likes");
+      const result = await res.json();
+      if (result.success) {
+        setLikedFanworks(new Set(result.data.map((item) => item.fanworkId)));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchFanworks();
+    fetchLikedFanworks();
+  }, []);
+
+  const handleLike = async (fanworkId) => {
+    try {
+      const res = await fetch("/api/likes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fanworkId }),
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        setLikedFanworks((prev) => {
+          const set = new Set(prev);
+          if (result.action === "liked") set.add(fanworkId);
+          else set.delete(fanworkId);
+          return set;
+        });
+        fetchFanworks(); // refresh count
+      }
+    } catch (err) {
+      console.error("Like error:", err);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <button
+        onClick={() => setShowUploadModal(true)}
+        className="m-10 bg-[#E3B214] text-white px-6 py-3 rounded-full font-bold"
+      >
+        Upload Karyamu!
+      </button>
+
+      {loading ? (
+        <p className="text-center">Loading...</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-8">
+          {fanworks.map((fw) => (
+            <FanworkCard
+              key={fw.id}
+              fanwork={fw}
+              isLiked={likedFanworks.has(fw.id)}
+              onLike={handleLike}
+              onCommentAdded={fetchFanworks}
+            />
+          ))}
+        </div>
+      )}
+
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <UploadFanwork onSuccess={fetchFanworks} onClose={() => setShowUploadModal(false)} />
         </div>
       )}
     </div>
   );
 }
-

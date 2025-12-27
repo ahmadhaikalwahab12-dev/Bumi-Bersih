@@ -1,31 +1,65 @@
-  generator client {
-    provider = "prisma-client-js"
-  }
+generator client {
+  provider = "prisma-client-js"
+}
 
-  datasource db {
-    provider = "sqlite"
-    url = "file:./dev.db"
-  }
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
 
-  model User {
-    id        Int       @id @default(autoincrement())
-    name      String
-    email     String    @unique
-    password  String
-    fanworks  Fanwork[]
-    createdAt DateTime  @default(now())
-  }
+model User {
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String    @unique
+  password   String
+  fanworks   Fanwork[]
+  likes      Like[]
+  comments   Comment[]
+  createdAt  DateTime  @default(now())
+}
 
-  model Fanwork {
-    id          Int      @id @default(autoincrement())
-    title       String
-    description String
-    imageUrl    String
-    imageSize   Int
-    imageType   String
-    isPublished Boolean  @default(false)
-    userId      Int
-    user        User     @relation(fields: [userId], references: [id])
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-  }
+model Fanwork {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String
+  isPublished Boolean   @default(true)
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images      Image[]
+  likes       Like[]
+  comments    Comment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  @@index([userId])
+}
+
+model Image {
+  id        Int      @id @default(autoincrement())
+  url       String
+  filename  String
+  size      Int
+  type      String
+  fanworkId Int
+  fanwork   Fanwork  @relation(fields: [fanworkId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Like {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  fanworkId  Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fanwork    Fanwork  @relation(fields: [fanworkId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  @@unique([userId, fanworkId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    Int
+  fanworkId Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fanwork   Fanwork  @relation(fields: [fanworkId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
